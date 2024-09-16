@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Calculadora Abono para Olivar</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        table { border-collapse: collapse; margin-top: 20px; width: 100%; }
+        th, td { border: 1px solid #dddddd; padding: 8px; text-align: center; }
+        .hidden { display: none; }
+        input { margin: 5px 0; padding: 5px; width: 100%; }
+        button { padding: 10px 20px; margin-top: 10px; margin-right: 10px; }
+        .question { margin-bottom: 20px; }
+    </style>
+    <script>
+        let abonoNombre = '';
+        let abonoComposicion = '';
+        let cosechaEsperada = 0;
+        let numeroHas = 0;
+        let composicionN = 0;
+        let composicionP = 0;
+        let composicionK = 0;
+
+        function iniciar() {
+            // Limpiar todos los campos y variables
+            abonoNombre = '';
+            abonoComposicion = '';
+            cosechaEsperada = 0;
+            numeroHas = 0;
+            composicionN = 0;
+            composicionP = 0;
+            composicionK = 0;
+
+            document.getElementById('abonoNombre').value = '';
+            document.getElementById('abonoComposicion').value = '';
+            document.getElementById('cosechaEsperada').value = '';
+            document.getElementById('numeroHas').value = '';
+
+            document.getElementById('pregunta1').classList.remove('hidden');
+            document.getElementById('pregunta2').classList.add('hidden');
+            document.getElementById('pregunta3').classList.add('hidden');
+            document.getElementById('tablaResultados').classList.add('hidden');
+            document.getElementById('mensajeFinal').classList.add('hidden');
+        }
+
+        function obtenerAbono() {
+            abonoNombre = document.getElementById('abonoNombre').value.trim();
+            abonoComposicion = document.getElementById('abonoComposicion').value.trim();
+            if (abonoNombre === '' || abonoComposicion === '') {
+                alert('Por favor, proporciona el nombre y la composición del abono.');
+                return;
+            }
+            // Parsear la composición
+            let composicion = abonoComposicion.split('-');
+            if (composicion.length !== 3) {
+                alert('Por favor, introduce la composición en el formato %N-%P-%K (ejemplo: 10-5-15).');
+                return;
+            }
+            composicionN = parseFloat(composicion[0]);
+            composicionP = parseFloat(composicion[1]);
+            composicionK = parseFloat(composicion[2]);
+            if (isNaN(composicionN) || isNaN(composicionP) || isNaN(composicionK)) {
+                alert('Asegúrate de que la composición contiene números válidos.');
+                return;
+            }
+            document.getElementById('pregunta1').classList.add('hidden');
+            document.getElementById('pregunta2').classList.remove('hidden');
+        }
+
+        function obtenerCosecha() {
+            cosechaEsperada = parseFloat(document.getElementById('cosechaEsperada').value);
+            if (isNaN(cosechaEsperada) || cosechaEsperada <= 0) {
+                alert('Por favor, proporciona una estimación válida de la cosecha esperada en kg/Ha.');
+                return;
+            }
+            document.getElementById('pregunta2').classList.add('hidden');
+            document.getElementById('pregunta3').classList.remove('hidden');
+        }
+
+        function obtenerNumeroHas() {
+            numeroHas = parseFloat(document.getElementById('numeroHas').value);
+            if (isNaN(numeroHas) || numeroHas <= 0) {
+                alert('Por favor, proporciona un número válido de hectáreas.');
+                return;
+            }
+            document.getElementById('pregunta3').classList.add('hidden');
+            calcularResultados();
+        }
+
+        function calcularResultados() {
+            // Paso 2: Extracción de nutrientes
+            let totalCosecha = cosechaEsperada * numeroHas;
+            let requerimientoN = (totalCosecha * 15) / 1000;
+            let requerimientoP = (totalCosecha * 4) / 1000;
+            let requerimientoK = (totalCosecha * 25) / 1000;
+
+            // Paso 5c: Cantidad de abono necesaria por nutriente
+            let kgAbonoN = composicionN > 0 ? (requerimientoN * 100) / composicionN : 0;
+            let kgAbonoP = composicionP > 0 ? (requerimientoP * 100) / composicionP : 0;
+            let kgAbonoK = composicionK > 0 ? (requerimientoK * 100) / composicionK : 0;
+
+            // Desechar resultados que den cero
+            let resultados = [];
+            if (kgAbonoN > 0) resultados.push({nutriente: 'N', kgAbono: kgAbonoN});
+            if (kgAbonoP > 0) resultados.push({nutriente: 'P', kgAbono: kgAbonoP});
+            if (kgAbonoK > 0) resultados.push({nutriente: 'K', kgAbono: kgAbonoK});
+
+            // Desechar los dos más altos y quedarse con el menor que no sea cero
+            resultados.sort(function(a, b) { return a.kgAbono - b.kgAbono; });
+            let resultadoFinal = resultados[0];
+
+            // Mostrar resultados
+            document.getElementById('resultadoAbono').innerText = abonoNombre;
+            document.getElementById('resultadoRiqueza').innerText = abonoComposicion;
+            document.getElementById('resultadoCosecha').innerText = cosechaEsperada.toFixed(2);
+            document.getElementById('resultadoHas').innerText = numeroHas.toFixed(2);
+            document.getElementById('resultadoKgAbono').innerText = resultadoFinal.kgAbono.toFixed(2);
+
+            document.getElementById('tablaResultados').classList.remove('hidden');
+        }
+
+        function limpiarDatos() {
+            iniciar();
+        }
+
+    </script>
+</head>
+<body onload="iniciar()">
+    <h1>Calculadora de Abono para Olivar</h1>
+
+    <div id="pregunta1" class="question">
+        <p>🌿 <strong>Pregunta 1:</strong> Necesito: Nombre y composición del abono (% Nitrógeno; % Fósforo; % Potasa)</p>
+        <input type="text" id="abonoNombre" placeholder="Nombre del abono (ejemplo: AbonoX)">
+        <input type="text" id="abonoComposicion" placeholder="Composición (N-P-K, ejemplo: 10-5-15)">
+        <button onclick="obtenerAbono()">Enviar</button>
+    </div>
+
+    <div id="pregunta2" class="question hidden">
+        <p>🌿 <strong>Pregunta 2:</strong> Necesito: <strong>Producción esperada</strong> en kg de aceitunas por Ha</p>
+        <input type="number" id="cosechaEsperada" placeholder="Cosecha esperada (kg/Ha)">
+        <button onclick="obtenerCosecha()">Enviar</button>
+    </div>
+
+    <div id="pregunta3" class="question hidden">
+        <p>🌿 <strong>Pregunta 3:</strong> Y para finalizar, el número de Has que vas a abonar.</p>
+        <input type="number" id="numeroHas" placeholder="Número de hectáreas">
+        <button onclick="obtenerNumeroHas()">Calcular</button>
+    </div>
+
+    <div id="tablaResultados" class="hidden">
+        <h2>Resultados</h2>
+        <table>
+            <tr>
+                <th>Abono</th>
+                <th>Riqueza</th>
+                <th>Cosecha esperada (kg/Ha)</th>
+                <th>Nº Has</th>
+                <th>kg abono Comprar</th>
+            </tr>
+            <tr>
+                <td id="resultadoAbono"></td>
+                <td id="resultadoRiqueza"></td>
+                <td id="resultadoCosecha"></td>
+                <td id="resultadoHas"></td>
+                <td id="resultadoKgAbono"></td>
+            </tr>
+        </table>
+        <button onclick="limpiarDatos()">Limpiar</button>
+    </div>
+
+</body>
+</html>
